@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Weather Forecast</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Admin - Add Weather Forecast</h2>
+        <form id="add-forecast-form">
+            <div class="form-group">
+                <label for="districts">Select Districts:</label>
+                <select id="districts" name="districts" class="form-control" multiple>
+                    <option value="Ampara">Ampara</option>
+                    <option value="Anuradhapura">Anuradhapura</option>
+                    <option value="Badulla">Badulla</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="forecast">Forecast Text:</label>
+                <input type="text" id="forecast" name="forecast" class="form-control" placeholder="Enter forecast text">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Forecast</button>
+        </form>
+
+        <div id="forecast-list" class="mt-5">
+            <h4>Current Forecasts by District:</h4>
+            <div id="district-forecasts"></div>
+        </div>
+
+        <button onclick="resetAllData()" class="btn btn-warning mt-3">Reset All Data</button>
+    </div>
+
+    <script>
+        function loadForecasts() {
+            axios.get('/all_forecasts')
+                .then(function(response) {
+                    const forecasts = response.data;
+                    const forecastListDiv = document.getElementById('district-forecasts');
+                    forecastListDiv.innerHTML = '';
+
+                    for (const district in forecasts) {
+                        forecastListDiv.innerHTML += `<h5>${district}:</h5>`;
+                        forecasts[district].forEach((forecast, index) => {
+                            forecastListDiv.innerHTML += `
+                                <p>
+                                    <input type="checkbox" class="forecast-checkbox" data-forecast="${forecast}" data-district="${district}">
+                                    ${forecast}
+                                </p>
+                            `;
+                        });
+                    }
+                });
+        }
+
+        loadForecasts();
+
+        function deleteSelectedForecasts() {
+            const selectedForecasts = Array.from(document.querySelectorAll('.forecast-checkbox:checked')).map(checkbox => {
+                return { district: checkbox.getAttribute('data-district'), forecast: checkbox.getAttribute('data-forecast') };
+            });
+
+            axios.post('/delete_forecast', { forecasts: selectedForecasts })
+                .then(function() {
+                    loadForecasts();
+                })
+                .catch(function(error) {
+                    console.error("There was an error deleting the forecast:", error);
+                });
+        }
+
+        function resetAllData() {
+            if (confirm("Are you sure you want to reset all data? This action cannot be undone.")) {
+                axios.post('/reset_all_data')
+                    .then(function() {
+                        loadForecasts();
+                        alert("All data has been reset.");
+                    })
+                    .catch(function(error) {
+                        console.error("There was an error resetting all data:", error);
+                    });
+            }
+        }
+
+        document.getElementById('add-forecast-form').onsubmit = function(event) {
+            event.preventDefault();
+            const districts = Array.from(document.getElementById('districts').selectedOptions).map(option => option.value);
+            const forecast = document.getElementById('forecast').value;
+
+            axios.post('/add_forecast', { districts: districts, forecast: forecast })
+                .then(function() {
+                    document.getElementById('forecast').value = '';
+                    loadForecasts();
+                })
+                .catch(function(error) {
+                    console.error("There was an error adding the forecast:", error);
+                });
+        };
+    </script>
+
+    <button onclick="deleteSelectedForecasts()" class="btn btn-danger mt-3">Delete Selected Forecasts</button>
+</body>
+</html>

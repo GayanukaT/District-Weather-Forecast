@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Weather Forecast</h2>
+        <form id="district-form">
+            <div class="form-group">
+                <label for="district">Select District:</label>
+                <select id="district" name="district" class="form-control">
+                    <option value="" disabled selected>Select a district</option>
+                    <option value="Ampara">Ampara</option>
+                    <option value="Anuradhapura">Anuradhapura</option>
+                    <option value="Badulla">Badulla</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Forecast</button>
+        </form>
+        
+        <div id="forecast-result" class="mt-4"></div>
+    </div>
+
+    <script>
+        document.getElementById('district-form').onsubmit = function(event) {
+            event.preventDefault();
+            const district = document.getElementById('district').value;
+            const forecastResultDiv = document.getElementById('forecast-result');
+
+            if (district) {
+                axios.get(`/get_forecast/${district}`)
+                    .then(function(response) {
+                        if (response.data.forecasts && response.data.forecasts.length > 0) {
+                            forecastResultDiv.innerHTML = `<h4>Forecast for ${district}:</h4>`;
+                            response.data.forecasts.forEach(function(forecast) {
+                                forecastResultDiv.innerHTML += `<p>${forecast}</p>`;
+                            });
+                        } else {
+                            forecastResultDiv.innerHTML = `<h4>Forecast for ${district}:</h4><p>No forecast data available.</p>`;
+                        }
+                    })
+                    .catch(function(error) {
+                        if (error.response) {
+                            forecastResultDiv.innerHTML = `<p class="text-danger">${error.response.data.error}</p>`;
+                        } else {
+                            forecastResultDiv.innerHTML = `<p class="text-danger">An error occurred while fetching the forecast.</p>`;
+                        }
+                    });
+            } else {
+                forecastResultDiv.innerHTML = '<p class="text-danger">Please select a district.</p>';
+            }
+        };
+    </script>
+</body>
+</html>
