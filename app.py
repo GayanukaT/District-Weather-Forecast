@@ -1,22 +1,20 @@
-from flask import Flask, jsonify, request
+import json
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-weather_data = {
-    "Kandy": {
-        "2024-11-01": "Afternoon thundershowers, evening/night showers, heavy showers above 100mm"
-    },
-}
+with open('weather_data.json') as f:
+    weather_data = json.load(f)
 
 @app.route('/')
 def index():
-    return "Welcome to the Weather Forecast API!"
+    return render_template('index.html')
 
-@app.route('/get_forecast/<district>/<date>', methods=['GET'])
-def get_forecast(district, date):
-    forecast = weather_data.get(district, {}).get(date)
+@app.route('/get_forecast/<district>', methods=['GET'])
+def get_forecast(district):
+    forecast = weather_data.get(district)
     if forecast:
-        return jsonify({"district": district, "date": date, "forecast": forecast})
+        return jsonify({"district": district, "forecast": forecast})
     else:
         return jsonify({"error": "Forecast not found!"}), 404
 
